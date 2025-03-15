@@ -12,6 +12,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class MySerialPortService extends Service {
 
@@ -22,12 +26,13 @@ public class MySerialPortService extends Service {
     public static final String TAG = "MySerialPortService";
     private FileOutputStream mFileOutputStream;
     private final IBinder mBinder = new MyBinder();
+    private StatusChange statusChange;
 
     public void setStatusChange(StatusChange statusChange) {
         this.statusChange = statusChange;
     }
 
-    private StatusChange statusChange;
+
 
     public MySerialPortService() {
 
@@ -156,23 +161,40 @@ public class MySerialPortService extends Service {
             setronlian(by[24]);
             setdianliu(by[6],by[7]);
             setwendu(by[29],by[30],by[31],by[32]);
-        }else if (by[2] == 0x00 && by[1] == 0x40){
-
-
+            getEveryoneVoltage();
+        }else if (by[2] == 0x00 && by[1] == 0x04){
+            // 获取电池串数
+            int cs = by[3];
+            int  index = 0;
+            List<Integer> list = new ArrayList();
+            for (int i = 4; i < cs; i+=2) {
+                int ui = BytesUtil.addByte(by[i],by[i+1]);
+                list.add(ui);
+                index++;
+                Log.d(TAG, "readDate: 第"+index+"串电池电压"+ui+"mV");
+            }
+            Integer max = Collections.max(list);
+            Integer min = Collections.min(list);
+            t2 = max -min;
+            Log.d(TAG, "readDate: 最大压差为："+t2);
+            if (statusChange != null){
+                statusChange.dateSet(t0,t1,t2,t3,t4,t5);
+            }
         }
     }
 
     private void setwendu(byte b, byte b1, byte b2, byte b3) {
         int wd1 = BytesUtil.addByte(b,b1);
         int wd2 = BytesUtil.addByte(b2,b3);
-
         t3 = Math.max(wd2, wd1);
+        Log.d(TAG, "setwendu: 温度为："+t3);
 
     }
 
     private void setdianliu(byte b, byte b1) {
        t4 =  BytesUtil.addByte(b,b1);
        t0 = t5*t4;
+        Log.d(TAG, "setdianliu: 电流为："+t4+", 电压为："+t5 +" , 功率为:"+t0);
     }
 
     private void setronlian(byte b) {
