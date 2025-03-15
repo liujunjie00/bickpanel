@@ -15,11 +15,10 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class MySerialPortService extends Service {
 
-    public static final String port = "/dev/ttyS2";
+    public static final String port = "/dev/ttyS9";
     private SerialPort serialPort;
     private ParcelFileDescriptor parcelFileDescriptor;
     private ByteBuffer dates = ByteBuffer.allocate(50);
@@ -105,7 +104,6 @@ public class MySerialPortService extends Service {
                 serialPort.open(parcelFileDescriptor, 9600);
                 mFileOutputStream = new FileOutputStream(parcelFileDescriptor.getFileDescriptor());
                 Log.d(TAG,"main Thread start "+mFileOutputStream);
-                writeThread.start();
                 while (true) {
                     Log.d(TAG, "run: 读取线程阻塞:");
                     int read = serialPort.read(dates);
@@ -116,17 +114,6 @@ public class MySerialPortService extends Service {
                 throw new RuntimeException(e);
             }
 
-        }
-    });
-
-    private final Thread writeThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            Log.d(TAG,"writeThread start "+mFileOutputStream);
-            if (mFileOutputStream != null){
-                //setColorTemperature(10);
-                //queryState();
-            }
         }
     });
 
